@@ -1,3 +1,4 @@
+import atexit
 import sys
 from threading import local
 from unittest.mock import Mock
@@ -175,9 +176,22 @@ class SolaraInteractiveShell(InteractiveShell):
     display_pub_class = Type(SolaraDisplayPublisher)
     history_manager = Any()  # type: ignore
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        atexit.unregister(self.atexit_operations)
+
+        magic = self.magics_manager.registry["ScriptMagics"]
+        atexit.unregister(magic.kill_bg_processes)
+
     def set_parent(self, parent):
         """Tell the children about the parent message."""
         self.display_pub.set_parent(parent)
+
+    def init_sys_modules(self):
+        pass  # don't create a __main__, it will cause a mem leak
+
+    def init_prefilter(self):
+        pass  # avoid consuming memory
 
     def init_history(self):
         self.history_manager = Mock()  # type: ignore
