@@ -3,70 +3,22 @@
 Click on one of the items on the left.
 """
 
+from pathlib import Path
+
 import solara
 from solara.alias import rv
 
-from .. import List
-from .. import SimpleListItem as ListItem
-
 _title = "API"
 
+HERE = Path(__file__).parent
 
-# @solara.component
-# def Page():
-#     return solara.Markdown(__doc__)
+
+@solara.component_vue(str(HERE.parent.parent.parent) + "/components/algolia_api.vue")
+def Algolia():
+    pass
+
 
 items = [
-    {
-        "name": "Input",
-        "icon": "mdi-chevron-left-box",
-        "pages": ["button", "checkbox", "input", "select", "slider", "switch", "togglebuttons", "file_browser", "file_drop"],
-    },
-    {
-        "name": "Output",
-        "icon": "mdi-chevron-right-box",
-        "pages": ["markdown", "markdown_editor", "html", "image", "sql_code", "file_download", "tooltip"],
-    },
-    {
-        "name": "Status",
-        "icon": "mdi-information",
-        "pages": ["success", "info", "warning", "error", "spinner", "progress"],
-    },
-    {
-        "name": "Viz",
-        "icon": "mdi-chart-histogram",
-        "pages": ["altair", "echarts", "matplotlib", "plotly", "plotly_express"],
-    },
-    {
-        "name": "Layout",
-        "icon": "mdi-page-layout-sidebar-left",
-        "pages": [
-            "app_layout",
-            "app_bar",
-            "app_bar_title",
-            "card",
-            "card_actions",
-            "columns",
-            "columns_responsive",
-            "column",
-            "row",
-            "griddraggable",
-            "gridfixed",
-            "sidebar",
-            "hbox",
-            "vbox",
-        ],
-    },
-    {
-        "name": "Data",
-        "icon": "mdi-database",
-        "pages": ["dataframe", "pivot_table"],
-    },
-    {
-        "name": "Page",
-        "icon": "mdi-file-code",
-        "pages": ["head", "title"],
-    },
     {
         "name": "Hooks",
         "icon": "mdi-hook",
@@ -95,62 +47,30 @@ items = [
     {
         "name": "Utils",
         "icon": "mdi-hammer-wrench",
-        "pages": [
-            "display",
-            "get_kernel_id",
-            "get_session_id",
-            "memoize",
-            "reactive",
-            "widget",
-            "component_vue",
-        ],
-    },
-    {
-        "name": "Advanced",
-        "icon": "mdi-head-cog-outline",
-        "pages": ["style", "meta"],
+        "pages": ["display", "memoize", "reactive", "widget", "component_vue"],
     },
     {
         "name": "Cross filter",
         "icon": "mdi-filter-variant-remove",
         "pages": ["cross_filter_dataframe", "cross_filter_report", "cross_filter_slider", "cross_filter_select"],
     },
-    {
-        "name": "Enterprise",
-        "icon": "mdi-office-building",
-        "pages": ["avatar", "avatar_menu"],
-    },
-    {
-        "name": "Lab (experimental)",
-        "icon": "mdi-flask-outline",
-        "pages": [
-            "computed",
-            "chat",
-            "confirmation_dialog",
-            "cookies_headers",
-            "menu",
-            "input_date",
-            "on_kernel_start",
-            "tab",
-            "tabs",
-            "task",
-            "use_task",
-        ],
-    },
 ]
 
 
 @solara.component
-def Page():
-    # show a gallery of all the api pages
-    router = solara.use_router()
-    route_current = router.path_routes[-2]
+def Page(route_external=None):
+    if route_external is not None:
+        route_current = route_external
+    else:
+        # show a gallery of all the api pages
+        router = solara.use_router()
+        route_current = router.path_routes[-2]
 
     routes = {r.path: r for r in route_current.children}
 
     for item in items:
         solara.Markdown(f"## {item['name']}")
-        with solara.ColumnsResponsive(12, 6, 6, 4, 4):
+        with solara.Row(justify="center", gap="20px", style={"flex-wrap": "wrap", "row-gap": "20px"}):
             for page in item["pages"]:
                 if page not in routes:
                     continue
@@ -177,12 +97,7 @@ def Page():
 
                 path = getattr(route.module, "redirect", path)
                 if path:
-                    with rv.Card(
-                        elevation=2,
-                        dark=False,
-                        height="100%",
-                        style_="display: flex; flex-direction: column; justify-content: space-between;",
-                    ):
+                    with solara.Card(classes=["component-card"], margin=0):
                         rv.CardTitle(children=[route.label])
                         with rv.CardText():
                             with solara.Link(path):
@@ -219,7 +134,7 @@ def Sidebar(children=[], level=0):
     def add(path):
         route = routes[path]
         with solara.Link(route):
-            ListItem(route.label, class_="active" if route_current is not None and path == route_current.path else None)
+            solara.v.ListItem(route.label, class_="active" if route_current is not None and path == route_current.path else None)
         del routes[path]
 
     # with solara.HBox(grow=True) as main:
@@ -230,12 +145,12 @@ def Sidebar(children=[], level=0):
                 solara.Title("Solara » API overview")
             else:
                 solara.Title("Solara » API » " + name)
-        with List():
+        with solara.v.List():
             add("/")
 
             for item in items:
-                with ListItem(item["name"], icon_name=item["icon"]):
-                    with List():
+                with solara.v.ListItem(item["name"], icon_name=item["icon"]):
+                    with solara.v.List():
                         for component in item["pages"]:
                             add(component)
 
