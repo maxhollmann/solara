@@ -13,11 +13,6 @@ _title = "API"
 HERE = Path(__file__).parent
 
 
-@solara.component_vue(str(HERE.parent.parent.parent) + "/components/algolia_api.vue")
-def Algolia():
-    pass
-
-
 items = [
     {
         "name": "Hooks",
@@ -67,7 +62,6 @@ def Page(route_external=None):
         route_current = router.path_routes[-2]
 
     routes = {r.path: r for r in route_current.children}
-
     for item in items:
         solara.Markdown(f"## {item['name']}")
         with solara.Row(justify="center", gap="20px", style={"flex-wrap": "wrap", "row-gap": "20px"}):
@@ -98,9 +92,9 @@ def Page(route_external=None):
                 path = getattr(route.module, "redirect", path)
                 if path:
                     with solara.Card(classes=["component-card"], margin=0):
-                        rv.CardTitle(children=[route.label])
+                        rv.CardTitle(children=[solara.Link(path if route_external is None else "api/" + path, children=[route.label])])
                         with rv.CardText():
-                            with solara.Link(path):
+                            with solara.Link(path if route_external is None else "api/" + path):
                                 with solara.Column(align="center"):
                                     solara.Image(image_url, width="120px")
                         doc = route.module.__doc__ or ""
@@ -120,47 +114,6 @@ def NoPage():
 
 
 @solara.component
-def Sidebar(children=[], level=0):
-    # note that we don't use children here, but we used route.module instead to ge the module
-    # this is fine because all api/*.py files use the standard Page component, and do not add
-    # a new Layout component
-    route_current, all_routes = solara.use_route()
-    if route_current is None:
-        return solara.Error("Page not found")
-
-    # keeps track of which routes we includes
-    routes = {r.path: r for r in all_routes.copy()}
-
-    def add(path):
-        route = routes[path]
-        with solara.Link(route):
-            solara.v.ListItem(route.label, class_="active" if route_current is not None and path == route_current.path else None)
-        del routes[path]
-
-    # with solara.HBox(grow=True) as main:
-    with rv.Col(tag="aside", md=4, lg=3, class_="sidebar bg-grey d-none d-md-block") as main:
-        with solara.Head():
-            name = route_current.label if route_current.label is not None else "No name"
-            if name == "API":
-                solara.Title("Solara » API overview")
-            else:
-                solara.Title("Solara » API » " + name)
-        with solara.v.List():
-            add("/")
-
-            for item in items:
-                with solara.v.ListItem(item["name"], icon_name=item["icon"]):
-                    with solara.v.List():
-                        for component in item["pages"]:
-                            add(component)
-
-        if routes:
-            print(f"Routes not used: {list(routes.keys())}")  # noqa
-
-    return main
-
-
-@solara.component
 def Layout(children=[]):
     route_current, all_routes = solara.use_route()
     if route_current is None:
@@ -169,8 +122,8 @@ def Layout(children=[]):
     if route_current.path == "/":
         return Page()
     else:
-        with solara.HBox(grow=True) as main:
-            with solara.Padding(4):
+        with solara.Column(align="center") as main:
+            with solara.Column(align="center", style={"max-width": "1024px"}):
                 if route_current.module:
                     # we ignore children, and make the element again
                     WithCode(route_current.module)
@@ -179,9 +132,6 @@ def Layout(children=[]):
 
 @solara.component
 def WithCode(module):
-    # e = solara.use_exception_handler()
-    # if e is not None:
-    #     return solara.Error("oops")
     component = getattr(module, "Page", None)
     with rv.Sheet() as main:
         # It renders code better
