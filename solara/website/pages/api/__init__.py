@@ -122,6 +122,8 @@ items = [
             "input_date",
             "tab",
             "tabs",
+            "task",
+            "use_task",
         ],
     },
 ]
