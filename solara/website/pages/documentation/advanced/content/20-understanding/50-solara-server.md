@@ -49,7 +49,7 @@ HTTP/1.1 200 OK
 
 By default, solara runs in development mode. This means, it will:
 
-   * Automatically [reload your project files](docs/reference/reloading) by watching files on the filesystemn
+   * Automatically [reload your project files](/documentation/getting_started/reference/reloading) by watching files on the filesystemn
    * Load debug version of the CSS files and JavaScript files for improved error messages (which leads to larger asset files).
 
 To disabled all of these option, pass the `--production` flag, or set the environment variable `SOLARA_MODE=production`.
