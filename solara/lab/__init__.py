@@ -1,6 +1,6 @@
 # isort: skip_file
 from .components import *  # noqa: F401, F403
-from ..tasks import task, use_task, Task  # noqa: F401, F403
+from ..tasks import reactive_task, task, use_task, Task  # noqa: F401, F403
 
 
 def __getattr__(name):
