@@ -149,6 +149,7 @@ class MainSettings(BaseSettings):
     platform: str = sys.platform
     host: str = HOST_DEFAULT
     experimental_performance: bool = False
+    log_level: str = "INFO"
 
     class Config:
         env_prefix = "solara_"
