@@ -5,7 +5,7 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Dict, List, Optional, TypeVar
+from typing import Dict, List, Optional, Tuple, TypeVar
 
 import ipykernel
 import ipyvue
@@ -262,9 +262,9 @@ def read_root(path: str, root_path: str = "", render_kwargs={}, use_nbextensions
     if not router.possible_match:
         return None
     if use_nbextensions:
-        nbextensions = get_nbextensions()
+        nbextensions, nbextensions_hashes = get_nbextensions()
     else:
-        nbextensions = []
+        nbextensions, nbextensions_hashes = [], {}
 
     from markupsafe import Markup
 
@@ -328,6 +328,7 @@ def read_root(path: str, root_path: str = "", render_kwargs={}, use_nbextensions
     resources = {
         "theme": "light",
         "nbextensions": nbextensions,
+        "nbextensions_hashes": nbextensions_hashes,
         "include_css": include_css,
         "include_js": include_js,
     }
@@ -397,7 +398,7 @@ def get_nbextensions_directories() -> List[Path]:
 
 
 @solara.memoize(storage=cache_memory)
-def get_nbextensions() -> List[str]:
+def get_nbextensions() -> Tuple[List[str], Dict[str, Optional[str]]]:
     from jupyter_core.paths import jupyter_config_path
 
     paths = [Path(p) / "nbconfig" for p in jupyter_config_path()]
@@ -411,8 +412,15 @@ def get_nbextensions() -> List[str]:
         logger.info(f"nbextension {name} not found")
         return False
 
-    nbextensions = [name for name, enabled in load_extensions.items() if enabled and (name not in nbextensions_ignorelist) and exists(name)]
-    return nbextensions
+    def hash_file(name):
+        for directory in nbextensions_directories:
+            if (directory / (name + ".js")).exists():
+                return solara.util.get_file_hash(directory / (name + ".js"))[1]
+        return None
+
+    nbextensions: List[str] = [name for name, enabled in load_extensions.items() if enabled and (name not in nbextensions_ignorelist) and exists(name)]
+    nbextensions_hashes = {name: hash_file(name) for name in nbextensions}
+    return nbextensions, nbextensions_hashes
 
 
 nbextensions_directories = get_nbextensions_directories()

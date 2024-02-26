@@ -379,6 +379,7 @@
         {% if 'jupyter-vuetify/extension' in resources.nbextensions -%}
         window.enable_nbextensions = true;
         {% endif -%}
+        nbextensionHashes = {{ resources.nbextensions_hashes | tojson | safe }};
         requirejs.config({
             baseUrl: '{{root_path}}/static/',
             waitSeconds: 3000,
@@ -391,7 +392,16 @@
         'jupyter-vuetify': 'nbextensions/jupyter-vuetify/nodeps',
             {% endif -%}
                     },
-                }
+                },
+                urlArgs: function (id, url) {
+                    id = id.replace("/static/nbextensions/", "").replace(".js", "");
+                    if (nbextensionHashes[id] !== undefined) {
+                        console.log('nbextensionHashes', id, nbextensionHashes[id]);
+                        return (url.indexOf('?') === -1 ? '?' : '&') + nbextensionHashes[id];
+                    } else {
+                        return '';
+                    }
+                },
             });
         requirejs([
             {% for ext in resources.nbextensions if ext != 'jupyter-vuetify/extension' and ext != 'jupyter-vue/extension' -%}
